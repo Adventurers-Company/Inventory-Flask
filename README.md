@@ -78,17 +78,3 @@ python test_models.py
 
 - A fábrica `create_app` em [app/__init__.py](app/__init__.py) cria as tabelas e popula dados iniciais quando o app inicia.
 - As configurações estão em [config.py](config.py): `development`, `production` e `testing`.
-
-## Contribuição
-
-1. Abra uma issue descrevendo a feature ou bug.
-2. Crie um branch com `feature/descricao`.
-3. Faça um PR com testes e descrição clara das mudanças.
-
-## Licença
-
-Licença não especificada (adicione uma em `LICENSE` se desejar).
-
----
-
-Se quiser, eu atualizo o README com mais exemplos de uso das APIs/rotas ou incluo instruções de migração para outro banco de dados.

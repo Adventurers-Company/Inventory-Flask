@@ -1,0 +1,446 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistema de Inventário MMORPG</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+
+<body>
+    <div class="container">
+        <!-- HEADER -->
+        <header class="header">
+            <div class="header-left">
+                <h1>{{ player.name }}</h1>
+                <p class="level">Nível {{ player.level }}</p>
+            </div>
+            <div class="header-right">
+                <button id="btn-library" class="btn btn-primary" title="Biblioteca de Itens">
+                    📚 Biblioteca
+                </button>
+                <button id="btn-items" class="btn btn-secondary" title="Gerenciar Itens">
+                    🛠️ Itens
+                </button>
+                <button id="btn-stats" class="btn btn-secondary" title="Ver Estatísticas">
+                    📊 Status
+                </button>
+            </div>
+        </header>
+
+        <!-- MAIN CONTENT -->
+        <main class="main-content">
+            <!-- ESQUERDA: INVENTÁRIO -->
+            <section class="inventory-section">
+                <h2>Inventário</h2>
+                <div class="bag-slots-fixed">
+                    {% for slot in inventory_data.bag_slots %}
+                    <div class="bag-slot {% if inventory_data.selected_bag and slot['bag_item_id'] == inventory_data.selected_bag['id'] %}active{% endif %}"
+                        data-bag-item-id="{{ slot['bag_item_id'] or '' }}" data-slot-index="{{ slot['index'] }}">
+                        {% if slot['equipped_item'] %}
+                        <div class="bag-slot-name">{{ slot['equipped_item']['name'] }}</div>
+                        <div class="bag-slot-meta">{{ slot['equipped_item']['stats']['slots'] | default(24) }} slots
+                        </div>
+                        {% else %}
+                        <div class="bag-slot-empty">Vazio</div>
+                        {% endif %}
+                    </div>
+                    {% endfor %}
+                </div>
+
+                <div class="bag-details">
+                    {% if inventory_data.selected_bag %}
+                    <div class="bag-header">
+                        <h3>{{ inventory_data.selected_bag['name'] }}</h3>
+                        <div class="bag-stats">
+                            <span class="slots-info">{{ inventory_data.selected_bag['used_slots'] }}/{{
+                                inventory_data.selected_bag['max_slots'] }}</span>
+                            <span class="weight-info">{{ "%.1f"|format(inventory_data.selected_bag['current_weight'])
+                                }}/{{ inventory_data.selected_bag['max_weight'] }}kg</span>
+                        </div>
+                    </div>
+                    {% else %}
+                    <div class="bag-empty">Nenhuma bolsa equipada</div>
+                    {% endif %}
+                </div>
+
+                <div class="bag-items-grid"
+                    data-bag-item-id="{{ inventory_data.selected_bag['id'] if inventory_data.selected_bag else '' }}">
+                    {% if inventory_data.selected_bag %}
+                    {% set bag_items = inventory_data.selected_bag['items'] or [] %}
+                    {% for item in bag_items %}
+                    <div class="inventory-slot item-slot" data-item-id="{{ item['id'] }}"
+                        data-item-type="{{ item['item_type'] }}" data-item-stats='{{ item["stats"]|tojson }}'
+                        data-rarity="{{ item['rarity'] }}" title="{{ item['name'] }}">
+                        <div class="slot-content">
+                            <span class="item-icon">{{ item['item_type'][0]|upper }}</span>
+                        </div>
+                    </div>
+                    {% endfor %}
+                    {% for i in range(inventory_data.selected_bag['max_slots'] - (bag_items|length)) %}
+                    <div class="inventory-slot empty-slot"></div>
+                    {% endfor %}
+                    {% else %}
+                    <div class="bag-items-empty">Selecione uma bolsa</div>
+                    {% endif %}
+                </div>
+            </section>
+
+            <!-- CENTRO: EQUIPAMENTO -->
+            <section class="equipment-section">
+                <h2>Equipamento</h2>
+
+                {% set armor_names = ['Capacete','Ombreira','Peitoral','Calca','Bota'] %}
+                {% set accessory_names = ['Colar','Amuleto','Anel 1','Anel 2','Anel 3','Capa'] %}
+                {% set weapon_names = ['Arma 1','Arma 2'] %}
+
+                <div class="equipment-category">
+                    <h3>Armadura</h3>
+                    <div class="equipment-grid armor">
+                        {% for slot in inventory_data.equipment_slots %}
+                        {% if slot['name'] in armor_names %}
+                        <div class="equipment-slot" data-slot-id="{{ slot['id'] }}"
+                            data-slot-type="{{ slot['accepted_type'] }}" data-slot-name="{{ slot['name'] }}" {% if
+                            slot['is_locked'] %}data-locked="true" {% endif %}>
+                            <div class="slot-label">{{ slot['name'] }}</div>
+                            {% if slot['equipped_item'] %}
+                            <div class="equipped-item" data-item-id="{{ slot['equipped_item']['id'] }}"
+                                data-item-type="{{ slot['equipped_item']['item_type'] }}"
+                                data-item-stats='{{ slot["equipped_item"]["stats"]|tojson }}'>
+                                <span class="item-name">{{ slot['equipped_item']['name'] }}</span>
+                            </div>
+                            {% else %}
+                            <div class="empty-equipment">-</div>
+                            {% endif %}
+                        </div>
+                        {% endif %}
+                        {% endfor %}
+                    </div>
+                </div>
+
+                <div class="equipment-category">
+                    <h3>Acessórios</h3>
+                    <div class="equipment-grid accessories">
+                        {% for slot in inventory_data.equipment_slots %}
+                        {% if slot['name'] in accessory_names %}
+                        <div class="equipment-slot" data-slot-id="{{ slot['id'] }}"
+                            data-slot-type="{{ slot['accepted_type'] }}" data-slot-name="{{ slot['name'] }}" {% if
+                            slot['is_locked'] %}data-locked="true" {% endif %}>
+                            <div class="slot-label">{{ slot['name'] }}</div>
+                            {% if slot['equipped_item'] %}
+                            <div class="equipped-item" data-item-id="{{ slot['equipped_item']['id'] }}"
+                                data-item-type="{{ slot['equipped_item']['item_type'] }}"
+                                data-item-stats='{{ slot["equipped_item"]["stats"]|tojson }}'>
+                                <span class="item-name">{{ slot['equipped_item']['name'] }}</span>
+                            </div>
+                            {% else %}
+                            <div class="empty-equipment">-</div>
+                            {% endif %}
+                        </div>
+                        {% endif %}
+                        {% endfor %}
+                    </div>
+                </div>
+
+                <div class="equipment-category">
+                    <h3>Armas</h3>
+                    <div class="equipment-grid weapons">
+                        {% for slot in inventory_data.equipment_slots %}
+                        {% if slot['name'] in weapon_names %}
+                        <div class="equipment-slot weapon-slot" data-slot-id="{{ slot['id'] }}"
+                            data-slot-type="{{ slot['accepted_type'] }}" data-slot-name="{{ slot['name'] }}" {% if
+                            slot['is_locked'] %}data-locked="true" {% endif %}>
+                            <div class="slot-label">{{ slot['name'] }}</div>
+                            {% if slot['equipped_item'] %}
+                            <div class="equipped-item" data-item-id="{{ slot['equipped_item']['id'] }}"
+                                data-item-type="{{ slot['equipped_item']['item_type'] }}"
+                                data-item-stats='{{ slot["equipped_item"]["stats"]|tojson }}'>
+                                <span class="item-name">{{ slot['equipped_item']['name'] }}</span>
+                            </div>
+                            {% else %}
+                            <div class="empty-equipment">-</div>
+                            {% endif %}
+                            {% if slot['is_locked'] %}<div class="lock-indicator">🔒</div>{% endif %}
+                        </div>
+                        {% endif %}
+                        {% endfor %}
+                    </div>
+                </div>
+            </section>
+
+            <!-- DIREITA: ATRIBUTOS -->
+            <section class="stats-section">
+                <h2>Atributos</h2>
+                <div class="stats-container">
+
+                    <!-- STATS DERIVADOS -->
+                    <div class="stats-group derivados">
+                        <h3>⚡ Stats Derivados</h3>
+                        <div class="stats-grid">
+                            <div class="stat-row">
+                                <span class="stat-label">❤️ Vida:</span>
+                                <span class="stat-value" data-stat-key="hp">{{ equipment_summary['total_stats']['hp']
+                                    }}</span>
+                            </div>
+                            <div class="stat-row">
+                                <span class="stat-label">💎 Mana:</span>
+                                <span class="stat-value" data-stat-key="mp">{{ equipment_summary['total_stats']['mp']
+                                    }}</span>
+                            </div>
+                            <div class="stat-row">
+                                <span class="stat-label">⚡ Stamina:</span>
+                                <span class="stat-value" data-stat-key="sp">{{ equipment_summary['total_stats']['sp']
+                                    }}</span>
+                            </div>
+                            <div class="stat-row">
+                                <span class="stat-label">🛡️ Defesa:</span>
+                                <span class="stat-value" data-stat-key="defesa">{{
+                                    equipment_summary['total_stats']['defesa'] }}</span>
+                            </div>
+                            <div class="stat-row">
+                                <span class="stat-label">💨 Esquiva:</span>
+                                <span class="stat-value" data-stat-key="esquiva">{{
+                                    equipment_summary['total_stats']['esquiva'] }}</span>
+                            </div>
+                            <div class="stat-row">
+                                <span class="stat-label">🛡️ Bloqueio:</span>
+                                <span class="stat-value" data-stat-key="bloqueio">{{
+                                    equipment_summary['total_stats']['bloqueio'] }}</span>
+                            </div>
+                            <div class="stat-row">
+                                <span class="stat-label">↩️ Contra-Ataque:</span>
+                                <span class="stat-value" data-stat-key="contra_ataque">{{
+                                    equipment_summary['total_stats']['contra_ataque'] }}</span>
+                            </div>
+                            <div class="stat-row">
+                                <span class="stat-label">🔩 Armadura:</span>
+                                <span class="stat-value" data-stat-key="armor">{{
+                                    equipment_summary['total_stats']['armor'] }}</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- ATRIBUTOS BASE -->
+                    <div class="stats-group atributos">
+                        <h3>💪 Atributos Base</h3>
+                        <div class="atributos-grid">
+                            <div class="atributo-row">
+                                <span class="stat-label">🔥 Força:</span>
+                                <span class="stat-value" data-stat-key="forca">{{
+                                    equipment_summary['total_stats']['forca'] }}</span>
+                            </div>
+                            <div class="atributo-row">
+                                <span class="stat-label">🎯 Destreza:</span>
+                                <span class="stat-value" data-stat-key="destreza">{{
+                                    equipment_summary['total_stats']['destreza'] }}</span>
+                            </div>
+                            <div class="atributo-row">
+                                <span class="stat-label">💨 Velocidade:</span>
+                                <span class="stat-value" data-stat-key="velocidade">{{
+                                    equipment_summary['total_stats']['velocidade'] }}</span>
+                            </div>
+                            <div class="atributo-row">
+                                <span class="stat-label">🛡️ Resistência:</span>
+                                <span class="stat-value" data-stat-key="resistencia">{{
+                                    equipment_summary['total_stats']['resistencia'] }}</span>
+                            </div>
+                            <div class="atributo-row">
+                                <span class="stat-label">❤️ Constituição:</span>
+                                <span class="stat-value" data-stat-key="constituicao">{{
+                                    equipment_summary['total_stats']['constituicao'] }}</span>
+                            </div>
+                            <div class="atributo-row">
+                                <span class="stat-label">🧠 Inteligência:</span>
+                                <span class="stat-value" data-stat-key="inteligencia">{{
+                                    equipment_summary['total_stats']['inteligencia'] }}</span>
+                            </div>
+                            <div class="atributo-row">
+                                <span class="stat-label">📚 Sabedoria:</span>
+                                <span class="stat-value" data-stat-key="sabedoria">{{
+                                    equipment_summary['total_stats']['sabedoria'] }}</span>
+                            </div>
+                            <div class="atributo-row">
+                                <span class="stat-label">⚡ Poder:</span>
+                                <span class="stat-value" data-stat-key="poder">{{
+                                    equipment_summary['total_stats']['poder'] }}</span>
+                            </div>
+                            <div class="atributo-row">
+                                <span class="stat-label">🎯 Foco:</span>
+                                <span class="stat-value" data-stat-key="foco">{{
+                                    equipment_summary['total_stats']['foco'] }}</span>
+                            </div>
+                            <div class="atributo-row">
+                                <span class="stat-label">👁️ Sentidos:</span>
+                                <span class="stat-value" data-stat-key="sentidos">{{
+                                    equipment_summary['total_stats']['sentidos'] }}</span>
+                            </div>
+                            <div class="atributo-row">
+                                <span class="stat-label">🗣️ Vontade:</span>
+                                <span class="stat-value" data-stat-key="vontade">{{
+                                    equipment_summary['total_stats']['vontade'] }}</span>
+                            </div>
+                            <div class="atributo-row">
+                                <span class="stat-label">🎭 Instinto:</span>
+                                <span class="stat-value" data-stat-key="instinto">{{
+                                    equipment_summary['total_stats']['instinto'] }}</span>
+                            </div>
+                            <div class="atributo-row">
+                                <span class="stat-label">✨ Espírito:</span>
+                                <span class="stat-value" data-stat-key="espirito">{{
+                                    equipment_summary['total_stats']['espirito'] }}</span>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <!-- MODAL BIBLIOTECA FLUTUANTE -->
+    <div id="library-modal" class="library-modal">
+        <div class="modal-header">
+            <h3>📚 Biblioteca de Itens</h3>
+            <button id="btn-close-library" class="btn-close">&times;</button>
+        </div>
+        <div class="modal-content">
+            <div class="library-search">
+                <input type="text" id="search-library" placeholder="Buscar item..." />
+                <select id="filter-type">
+                    <option value="">Todos os tipos</option>
+                    <option value="helmet">Capacetes</option>
+                    <option value="chest">Peitoral</option>
+                    <option value="legs">Calças</option>
+                    <option value="boots">Botas</option>
+                    <option value="necklace">Colares</option>
+                    <option value="ring">Anéis</option>
+                    <option value="amulet">Amuletos</option>
+                    <option value="sword">Espadas</option>
+                    <option value="axe">Machados</option>
+                    <option value="dagger">Adagas</option>
+                    <option value="bow">Arcos</option>
+                    <option value="consumable">Consumíveis</option>
+                </select>
+            </div>
+            <div class="library-items" id="library-items">
+                {% for item in item_library %}
+                <div class="library-item" data-item-id="{{ item['id'] }}" data-item-type="{{ item['item_type'] }}"
+                    data-item-stats='{{ item["stats"]|tojson }}' data-rarity="{{ item['rarity'] }}"
+                    data-library-item-id="{{ item['id'] }}">
+                    <div class="library-item-header">
+                        <span class="library-item-name">{{ item['name'] }}</span>
+                        <span class="library-item-rarity">{{ item['rarity'] | upper }}</span>
+                    </div>
+                    <div class="library-item-details">
+                        <span>🎒 {{ item['weight'] }}kg</span>
+                        <span>{{ item['item_type'] | replace('_', ' ') | title }}</span>
+                    </div>
+                    {% if item['stats'] %}
+                    <div class="library-item-stats">
+                        {% for stat, value in item['stats'].items() %}
+                        <span class="stat-tag">+{{ value }} {{ stat | replace('_', ' ') | title }}</span>
+                        {% endfor %}
+                    </div>
+                    {% endif %}
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL CRUD DE ITENS -->
+    <div id="items-modal" class="items-modal">
+        <div class="modal-header">
+            <h3>🛠️ Gerenciar Itens</h3>
+            <button id="btn-close-items" class="btn-close">&times;</button>
+        </div>
+        <div class="modal-content">
+            <div class="items-form">
+                <input type="hidden" id="item-id" />
+                <div class="form-row">
+                    <label>Nome</label>
+                    <input type="text" id="item-name" placeholder="Nome do item" />
+                </div>
+                <div class="form-row">
+                    <label>Tipo</label>
+                    <select id="item-type">
+                        <option value="helmet">Capacete</option>
+                        <option value="shoulder">Ombreira</option>
+                        <option value="chest">Peitoral</option>
+                        <option value="legs">Calça</option>
+                        <option value="boots">Bota</option>
+                        <option value="necklace">Colar</option>
+                        <option value="amulet">Amuletos</option>
+                        <option value="ring">Anel</option>
+                        <option value="cloak">Capa</option>
+                        <option value="sword">Espada</option>
+                        <option value="axe">Machado</option>
+                        <option value="dagger">Adaga</option>
+                        <option value="bow">Arco</option>
+                        <option value="shield">Escudo</option>
+                        <option value="consumable">Consumível</option>
+                    </select>
+                </div>
+                <div class="form-row">
+                    <label>Peso</label>
+                    <input type="number" id="item-weight" step="0.1" min="0" placeholder="0" />
+                </div>
+                <div class="form-row">
+                    <label>Raridade</label>
+                    <select id="item-rarity">
+                        <option value="common">Comum</option>
+                        <option value="uncommon">Incomum</option>
+                        <option value="rare">Raro</option>
+                        <option value="epic">Épico</option>
+                        <option value="legendary">Lendário</option>
+                    </select>
+                </div>
+                <div class="form-row">
+                    <label>Dados (JSON)</label>
+                    <textarea id="item-data" rows="5" placeholder='{"forca": 10, "defesa": 5, "hp": 50}'></textarea>
+                </div>
+                <div class="form-actions">
+                    <button id="btn-item-save" class="btn btn-primary">Salvar</button>
+                    <button id="btn-item-new" class="btn btn-secondary">Novo</button>
+                    <button id="btn-item-delete" class="btn btn-danger">Excluir</button>
+                </div>
+            </div>
+            <div class="items-list" id="items-list">
+                {% for item in item_library %}
+                <div class="items-list-row" data-item-id="{{ item['id'] }}">
+                    <div class="items-list-info">
+                        <span class="items-list-name">{{ item['name'] }}</span>
+                        <span class="items-list-type">{{ item['item_type'] | replace('_', ' ') | title }}</span>
+                    </div>
+                    <div class="items-list-actions">
+                        <button class="btn btn-small btn-edit" data-item-id="{{ item['id'] }}">Editar</button>
+                        <button class="btn btn-small btn-danger" data-item-id="{{ item['id'] }}">Excluir</button>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+
+    <!-- CONTEXT MENU -->
+    <div id="context-menu" class="context-menu">
+        <!-- Item actions -->
+        <button type="button" data-action="edit" data-context="item">Editar</button>
+        <button type="button" data-action="delete" data-context="item">Deletar</button>
+        <button type="button" data-action="duplicate" data-context="item">Duplicar</button>
+        <button type="button" data-action="move" data-context="item">Mover</button>
+        <!-- Bag slot actions -->
+        <button type="button" data-action="unequip" data-context="bag">Desequipar</button>
+        <button type="button" data-action="delete" data-context="bag">Deletar</button>
+    </div>
+
+    <!-- TOOLTIP -->
+    <div id="tooltip" class="tooltip"></div>
+
+    <!-- Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
+    <script src="{{ url_for('static', filename='js/app.js') }}"></script>
+</body>
+
+</html>

@@ -1,0 +1,971 @@
+/* ============================================
+   SISTEMA DE INVENTÁRIO MMORPG
+   Design inspirado em Tibia / Ragnarok
+   ============================================ */
+
+:root {
+    --color-primary: #8B4513;
+    --color-secondary: #1a1a1a;
+    --color-accent: #FFD700;
+    --color-text: #e0e0e0;
+    --color-text-dark: #1a1a1a;
+    --color-border: #404040;
+    --color-bg: #0a0a0a;
+    --color-bg-light: #1a1a1a;
+    --color-bg-lighter: #2a2a2a;
+
+    /* Raridades */
+    --color-common: #FFFFFF;
+    --color-uncommon: #1EFF00;
+    --color-rare: #0070DD;
+    --color-epic: #A335EE;
+    --color-legendary: #FF8000;
+
+    /* Tamanhos */
+    --slot-size: 40px;
+    --gap: 6px;
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+html,
+body {
+    width: 100%;
+    height: 100vh;
+    overflow: hidden;
+    background: var(--color-bg);
+    color: var(--color-text);
+    font-family: 'Arial', sans-serif;
+    font-size: 12px;
+}
+
+/* ============================================
+   CONTAINER E LAYOUT PRINCIPAL
+   ============================================ */
+
+.container {
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    width: 100%;
+    background: var(--color-bg);
+}
+
+.header {
+    background: linear-gradient(135deg, var(--color-primary), var(--color-secondary));
+    padding: 5px 20px;
+    border-bottom: 3px solid var(--color-accent);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.5);
+}
+
+.header-left h1 {
+    font-size: 15px;
+    margin-bottom: 0px;
+    color: var(--color-accent);
+    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.8);
+}
+
+.header-left .level {
+    font-size: 11px;
+    color: var(--color-text);
+    opacity: 0.8;
+}
+
+.header-right {
+    display: flex;
+    gap: 10px;
+}
+
+/* ============================================
+   BOTÕES
+   ============================================ */
+
+.btn {
+    padding: 8px 16px;
+    border: 1px solid var(--color-accent);
+    background: var(--color-secondary);
+    color: var(--color-accent);
+    cursor: pointer;
+    font-size: 12px;
+    font-weight: bold;
+    border-radius: 3px;
+    transition: all 0.2s ease;
+    text-transform: uppercase;
+}
+
+.btn:hover {
+    background: var(--color-accent);
+    color: var(--color-text-dark);
+    box-shadow: 0 0 10px var(--color-accent);
+}
+
+.btn-primary {
+    background: var(--color-primary);
+    border-color: var(--color-primary);
+    color: var(--color-text);
+}
+
+.btn-secondary {
+    background: transparent;
+}
+
+.btn-small {
+    padding: 5px 10px;
+    font-size: 10px;
+    width: 100%;
+    margin-top: 8px;
+}
+
+.btn-close {
+    background: transparent;
+    border: none;
+    color: var(--color-text);
+    font-size: 24px;
+    cursor: pointer;
+    padding: 0;
+    width: 30px;
+    height: 30px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
+}
+
+.btn-close:hover {
+    color: var(--color-accent);
+    transform: scale(1.2);
+}
+
+/* ============================================
+   CONTEXT MENU
+   ============================================ */
+
+.context-menu {
+    position: fixed;
+    min-width: 160px;
+    background: var(--color-bg-light);
+    border: 2px solid var(--color-border);
+    border-radius: 4px;
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.6);
+    z-index: 10001;
+    display: none;
+    padding: 6px;
+}
+
+.context-menu.active {
+    display: block;
+}
+
+.context-menu button {
+    width: 100%;
+    background: transparent;
+    border: none;
+    color: var(--color-text);
+    text-align: left;
+    padding: 6px 8px;
+    font-size: 12px;
+    cursor: pointer;
+}
+
+.context-menu button:hover {
+    background: var(--color-bg-lighter);
+    color: var(--color-accent);
+}
+
+/* ============================================
+   MAIN CONTENT
+   ============================================ */
+
+.main-content {
+    flex: 1;
+    overflow: hidden;
+    padding: 6px;
+    display: grid;
+    grid-template-columns: 1.1fr 1fr 0.9fr;
+    gap: 6px;
+    background: var(--color-bg);
+    height: calc(100vh - 42px);
+}
+
+/* ============================================
+   SECTIONS
+   ============================================ */
+
+.inventory-section,
+.equipment-section,
+.stats-section {
+    background: var(--color-bg-light);
+    border: 2px solid var(--color-border);
+    border-radius: 4px;
+    padding: 15px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+}
+
+.inventory-section h2,
+.equipment-section h2,
+.stats-section h2 {
+    color: var(--color-accent);
+    margin-bottom: 12px;
+    font-size: 14px;
+    text-transform: uppercase;
+    border-bottom: 2px solid var(--color-primary);
+    padding-bottom: 8px;
+}
+
+/* ============================================
+   BOLSAS/BAGS
+   ============================================ */
+
+.bag-slots-fixed {
+    display: grid;
+    grid-template-columns: repeat(6, 1fr);
+    gap: var(--gap);
+    margin-bottom: 12px;
+}
+
+.bag-slot {
+    background: var(--color-secondary);
+    border: 2px solid var(--color-border);
+    border-radius: 2px;
+    padding: 6px;
+    text-align: center;
+    cursor: pointer;
+    min-height: 54px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 4px;
+    transition: all 0.2s ease;
+}
+
+.bag-slot.active {
+    border-color: var(--color-accent);
+    box-shadow: 0 0 10px rgba(255, 215, 0, 0.3);
+}
+
+.bag-slot-empty {
+    color: var(--color-text);
+    opacity: 0.5;
+    font-size: 10px;
+}
+
+.bag-slot-name {
+    font-size: 10px;
+    color: var(--color-accent);
+    font-weight: bold;
+}
+
+.bag-slot-meta {
+    font-size: 9px;
+    color: var(--color-text);
+    opacity: 0.8;
+}
+
+.bag-details {
+    margin-bottom: 10px;
+    min-height: 34px;
+}
+
+.bag-empty {
+    color: var(--color-text);
+    opacity: 0.6;
+    font-size: 11px;
+}
+
+.bag-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+}
+
+.bag-header h3 {
+    color: var(--color-accent);
+    font-size: 13px;
+    margin: 0;
+}
+
+.bag-stats {
+    display: flex;
+    gap: 15px;
+    font-size: 11px;
+    color: var(--color-text);
+}
+
+.slots-info {
+    background: var(--color-secondary);
+    padding: 4px 8px;
+    border-radius: 2px;
+    border: 1px solid var(--color-border);
+}
+
+.weight-info {
+    background: var(--color-secondary);
+    padding: 4px 8px;
+    border-radius: 2px;
+    border: 1px solid var(--color-border);
+}
+
+/* SLOTS DE INVENTÁRIO */
+
+.bag-items-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, var(--slot-size));
+    gap: var(--gap);
+    min-height: calc(var(--slot-size) * 4 + var(--gap));
+    align-content: start;
+}
+
+.bag-items-empty {
+    grid-column: 1 / -1;
+    text-align: center;
+    color: var(--color-text);
+    opacity: 0.6;
+    padding: 12px;
+}
+
+.inventory-slot {
+    width: var(--slot-size);
+    height: var(--slot-size);
+    background: var(--color-secondary);
+    border: 2px solid var(--color-border);
+    border-radius: 2px;
+    cursor: grab;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    transition: all 0.2s ease;
+    user-select: none;
+}
+
+.inventory-slot:hover {
+    border-color: var(--color-accent);
+    box-shadow: 0 0 10px rgba(255, 215, 0, 0.3);
+}
+
+.inventory-slot.empty-slot {
+    opacity: 0.3;
+    cursor: default;
+}
+
+.item-slot {
+    background: linear-gradient(135deg, var(--color-bg-lighter), var(--color-secondary));
+    cursor: grab;
+}
+
+.item-slot:active {
+    cursor: grabbing;
+}
+
+.item-slot[data-rarity="common"] {
+    border-color: var(--color-common);
+}
+
+.item-slot[data-rarity="uncommon"] {
+    border-color: var(--color-uncommon);
+    box-shadow: 0 0 8px rgba(30, 255, 0, 0.3);
+}
+
+.item-slot[data-rarity="rare"] {
+    border-color: var(--color-rare);
+    box-shadow: 0 0 8px rgba(0, 112, 221, 0.3);
+}
+
+.item-slot[data-rarity="epic"] {
+    border-color: var(--color-epic);
+    box-shadow: 0 0 8px rgba(163, 53, 238, 0.3);
+}
+
+.item-slot[data-rarity="legendary"] {
+    border-color: var(--color-legendary);
+    box-shadow: 0 0 8px rgba(255, 128, 0, 0.3);
+}
+
+.slot-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+    width: 100%;
+    height: 100%;
+    justify-content: center;
+}
+
+.item-icon {
+    font-size: 20px;
+    color: var(--color-text);
+    font-weight: bold;
+}
+
+.quantity {
+    font-size: 10px;
+    background: var(--color-accent);
+    color: var(--color-text-dark);
+    border-radius: 50%;
+    width: 16px;
+    height: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: absolute;
+    bottom: -3px;
+    right: -3px;
+    font-weight: bold;
+}
+
+/* ============================================
+   EQUIPMENT SLOTS
+   ============================================ */
+
+.equipment-category {
+    margin-bottom: 12px;
+}
+
+.equipment-category h3 {
+    color: var(--color-accent);
+    font-size: 12px;
+    margin-bottom: 8px;
+    text-transform: uppercase;
+    border-bottom: 1px solid var(--color-primary);
+    padding-bottom: 5px;
+}
+
+.equipment-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: var(--gap);
+}
+
+.equipment-grid.armor {
+    grid-template-columns: repeat(5, 1fr);
+}
+
+.equipment-grid.accessories {
+    grid-template-columns: repeat(4, 1fr);
+}
+
+.equipment-grid.weapons {
+    grid-template-columns: repeat(2, 1fr);
+}
+
+.equipment-slot {
+    width: 80px;
+    height: 80px;
+    background: var(--color-secondary);
+    border: 2px solid var(--color-border);
+    border-radius: 2px;
+    padding: 4px;
+    display: flex;
+    flex-direction: column;
+    cursor: grab;
+    position: relative;
+    transition: all 0.2s ease;
+    overflow: hidden;
+}
+
+.equipment-slot[data-locked="true"] {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.equipment-slot:not([data-locked="true"]):hover {
+    border-color: var(--color-accent);
+    box-shadow: 0 0 10px rgba(255, 215, 0, 0.3);
+}
+
+.slot-label {
+    font-size: 9px;
+    color: var(--color-text);
+    margin-bottom: 2px;
+    text-transform: uppercase;
+    opacity: 0.7;
+}
+
+.equipped-item {
+    flex: 1;
+    background: linear-gradient(135deg, var(--color-primary), var(--color-secondary));
+    border: 1px solid var(--color-primary);
+    border-radius: 2px;
+    padding: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    overflow: hidden;
+}
+
+.item-name {
+    font-size: 10px;
+    color: var(--color-accent);
+    font-weight: bold;
+    word-wrap: break-word;
+}
+
+.empty-equipment {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--color-text);
+    opacity: 0.3;
+    font-size: 24px;
+}
+
+.lock-indicator {
+    position: absolute;
+    top: 2px;
+    right: 2px;
+    font-size: 12px;
+}
+
+/* ============================================
+   STATS SECTION
+   ============================================ */
+
+.stats-container {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 8px;
+    overflow-y: auto;
+}
+
+.stats-group {
+    background: var(--color-bg-lighter);
+    border: 1px solid var(--color-border);
+    border-radius: 4px;
+    padding: 10px;
+}
+
+.stats-group h3 {
+    color: var(--color-accent);
+    font-size: 12px;
+    margin-bottom: 12px;
+    text-transform: uppercase;
+    border-bottom: 2px solid var(--color-primary);
+    padding-bottom: 8px;
+}
+
+.stats-grid,
+.atributos-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 4px;
+}
+
+.stat-row,
+.atributo-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: var(--color-secondary);
+    padding: 8px;
+    border: 1px solid var(--color-border);
+    border-radius: 2px;
+    transition: all 0.2s ease;
+    font-size: 11px;
+}
+
+.stat-row:hover,
+.atributo-row:hover {
+    background: var(--color-bg-lighter);
+    border-color: var(--color-primary);
+    box-shadow: 0 0 6px rgba(255, 215, 0, 0.2);
+}
+
+.stat-label {
+    font-size: 11px;
+    color: var(--color-text);
+}
+
+.stat-value {
+    font-size: 12px;
+    color: var(--color-accent);
+    font-weight: bold;
+    min-width: 50px;
+    text-align: right;
+}
+
+/* ============================================
+   MODAL CRUD ITENS
+   ============================================ */
+
+.items-modal {
+    position: fixed;
+    top: 20px;
+    left: 20px;
+    width: 420px;
+    max-height: 600px;
+    background: var(--color-bg-light);
+    border: 2px solid var(--color-accent);
+    border-radius: 4px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.8);
+    display: none;
+    flex-direction: column;
+    z-index: 1100;
+}
+
+.items-modal.active {
+    display: flex;
+}
+
+.items-form {
+    display: grid;
+    gap: 8px;
+    margin-bottom: 10px;
+}
+
+.form-row {
+    display: grid;
+    gap: 4px;
+}
+
+.form-row label {
+    font-size: 10px;
+    color: var(--color-text);
+    opacity: 0.8;
+}
+
+.form-row input,
+.form-row select,
+.form-row textarea {
+    background: var(--color-secondary);
+    color: var(--color-text);
+    border: 1px solid var(--color-border);
+    border-radius: 2px;
+    padding: 6px;
+    font-size: 11px;
+}
+
+.form-actions {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 6px;
+}
+
+.btn-danger {
+    border-color: #b33636;
+    color: #ffb3b3;
+}
+
+.btn-danger:hover {
+    background: #b33636;
+    color: #1a1a1a;
+    box-shadow: 0 0 10px rgba(179, 54, 54, 0.6);
+}
+
+.items-list {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    max-height: 200px;
+    overflow-y: auto;
+    padding-right: 4px;
+}
+
+.items-list-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: var(--color-bg-lighter);
+    border: 1px solid var(--color-border);
+    border-radius: 2px;
+    padding: 6px;
+}
+
+.items-list-info {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.items-list-name {
+    font-size: 11px;
+    color: var(--color-accent);
+    font-weight: bold;
+}
+
+.items-list-type {
+    font-size: 9px;
+    color: var(--color-text);
+    opacity: 0.7;
+}
+
+.items-list-actions {
+    display: flex;
+    gap: 6px;
+}
+
+/* ============================================
+   MODAL BIBLIOTECA
+   ============================================ */
+
+.library-modal {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    width: 400px;
+    max-height: 500px;
+    background: var(--color-bg-light);
+    border: 2px solid var(--color-accent);
+    border-radius: 4px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.8);
+    display: none;
+    flex-direction: column;
+    z-index: 1000;
+    cursor: move;
+}
+
+.library-modal.active {
+    display: flex;
+}
+
+.modal-header {
+    background: linear-gradient(135deg, var(--color-primary), var(--color-secondary));
+    color: var(--color-accent);
+    padding: 12px 15px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 2px solid var(--color-accent);
+    cursor: grab;
+}
+
+.modal-header h3 {
+    font-size: 13px;
+    margin: 0;
+}
+
+.modal-content {
+    flex: 1;
+    overflow-y: auto;
+    padding: 10px;
+}
+
+.library-search {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 10px;
+    position: sticky;
+    top: 0;
+    background: var(--color-bg-light);
+    z-index: 10;
+    padding-bottom: 8px;
+}
+
+.library-search input,
+.library-search select {
+    flex: 1;
+    padding: 6px;
+    background: var(--color-secondary);
+    color: var(--color-text);
+    border: 1px solid var(--color-border);
+    border-radius: 2px;
+    font-size: 11px;
+}
+
+.library-search input::placeholder {
+    color: var(--color-text);
+    opacity: 0.5;
+}
+
+.library-items {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.library-item {
+    background: var(--color-bg-lighter);
+    border: 1px solid var(--color-border);
+    border-radius: 2px;
+    padding: 8px;
+    cursor: grab;
+    transition: all 0.2s ease;
+}
+
+.library-item:hover {
+    border-color: var(--color-accent);
+    box-shadow: 0 0 8px rgba(255, 215, 0, 0.2);
+    transform: translateX(4px);
+}
+
+.library-item:active {
+    cursor: grabbing;
+}
+
+.library-item-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 6px;
+    padding-left: 8px;
+}
+
+.library-item-name {
+    font-size: 11px;
+    color: var(--color-text);
+    font-weight: bold;
+}
+
+.library-item-rarity {
+    font-size: 9px;
+    padding: 2px 6px;
+    background: var(--color-secondary);
+    border-radius: 2px;
+    color: var(--color-accent);
+}
+
+.library-item-details {
+    font-size: 9px;
+    color: var(--color-text);
+    opacity: 0.7;
+    display: flex;
+    gap: 8px;
+    margin-bottom: 6px;
+}
+
+.library-item-stats {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+}
+
+.stat-tag {
+    font-size: 9px;
+    background: var(--color-secondary);
+    color: var(--color-accent);
+    padding: 2px 6px;
+    border-radius: 2px;
+    border-left: 2px solid var(--color-primary);
+}
+
+/* ============================================
+   TOOLTIP
+   ============================================ */
+
+.tooltip {
+    position: fixed;
+    background: var(--color-bg-lighter);
+    border: 2px solid var(--color-accent);
+    border-radius: 4px;
+    padding: 12px;
+    font-size: 11px;
+    color: var(--color-text);
+    pointer-events: none;
+    z-index: 2000;
+    display: none;
+    max-width: 250px;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.8);
+}
+
+.tooltip.active {
+    display: block;
+    animation: tooltipFade 0.2s ease;
+}
+
+.tooltip-title {
+    color: var(--color-accent);
+    font-weight: bold;
+    margin-bottom: 8px;
+    border-bottom: 1px solid var(--color-primary);
+    padding-bottom: 6px;
+}
+
+.tooltip-stat {
+    display: flex;
+    justify-content: space-between;
+    padding: 2px 0;
+}
+
+.tooltip-stat-label {
+    color: var(--color-text);
+}
+
+.tooltip-stat-value {
+    color: var(--color-accent);
+    font-weight: bold;
+}
+
+@keyframes tooltipFade {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* ============================================
+   DRAG & DROP VISUAL FEEDBACK
+   ============================================ */
+
+.sortable-drag {
+    opacity: 0.5;
+    background: var(--color-accent);
+    border-color: var(--color-accent);
+}
+
+.sortable-ghost {
+    opacity: 0.3;
+    background: var(--color-primary);
+    border-color: var(--color-primary);
+}
+
+.drag-over {
+    background: rgba(255, 215, 0, 0.1);
+    border-color: var(--color-accent);
+}
+
+/* ============================================
+   RESPONSIVO
+   ============================================ */
+
+/* ============================================
+   ANIMAÇÕES
+   ============================================ */
+
+@keyframes slideIn {
+    from {
+        transform: translateY(20px);
+        opacity: 0;
+    }
+
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+
+@keyframes pulse {
+
+    0%,
+    100% {
+        opacity: 1;
+    }
+
+    50% {
+        opacity: 0.7;
+    }
+}
+
+.item-slot {
+    animation: slideIn 0.3s ease;
+}
+
+.library-item {
+    animation: slideIn 0.3s ease;
+}

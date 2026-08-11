@@ -6,8 +6,8 @@ from datetime import timedelta
 
 class Config:
     """Configurações base"""
-    SECRET_KEY = os.environ.get('SECRET_KEY')
-    SQLALCHEMY_DATABASE_URI = 'sqlite:///inventory.db'
+    SECRET_KEY = os.environ.get('SECRET_KEY') # Lembrem de mudar esta mer...
+    SQLALCHEMY_DATABASE_URI = 'sqlite:///inventory.db' 
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     
     # Configurações de sessão
